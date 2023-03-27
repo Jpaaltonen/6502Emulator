@@ -153,7 +153,7 @@ private:
 		delayCnt = 2;
 		delay = 0.5 / (delayCnt + 1), t = 0; //Set a delay for continuous mode
 
-		//As console window is not shown on the background, print the messages on OLC console - Only if it's open, but nothing gets printed to std out, if it's not
+		//As standard console window is not shown on the background, print the messages on the OLC console if it's open
 		ConsoleCaptureStdOut(true);
 		return true;
 	}
