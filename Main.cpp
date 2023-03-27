@@ -7,7 +7,7 @@
 #include <fstream>
 #include <chrono>
 #include <stdexcept>
-#define MAX_SPEED 8
+#define MAX_SPEED 9
 
 
 //Stopwatch to time the Dormann tests
@@ -605,7 +605,7 @@ private:
 
 		UI_line++;
 		DrawString(UI_rightColumn, UI_line * UI_lineHeight, "EXECUTION SPEED:", olc::DARK_YELLOW);
-		DrawString(UI_rightColumn + offset * UI_charWidth, UI_line * UI_lineHeight, (stepMode? "N/A":std::to_string(delayCnt)+"/"+std::to_string(MAX_SPEED)));
+		DrawString(UI_rightColumn + offset * UI_charWidth, UI_line * UI_lineHeight, (stepMode? "N/A":std::to_string(delayCnt+1)+"/"+std::to_string(MAX_SPEED+1)));
 
 	}
 
