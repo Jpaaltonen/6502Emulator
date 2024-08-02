@@ -1,16 +1,17 @@
 
 #define OLC_PGE_APPLICATION
 
-#include <olcPixelGameEngine.h>
+#include <OLC/olcPixelGameEngine.h>
 #include "cpu6502.h"
 #include <string>
 #include <fstream>
+#include <conio.h>
 #include <chrono>
-#include <stdexcept>
-#define MAX_SPEED 9
+
+#define MAX_SPEED 8
 
 
-//Stopwatch to time the Dormann tests
+//Stopwatch class to time the tests
 class watch
 {
 public:
@@ -33,13 +34,6 @@ public:
 class Monitor6502 : public olc::PixelGameEngine
 {
 public:
-	Monitor6502(cpu6502* c)
-	{
-		//Set the pointer of cpu to the one created in main
-		cpu = c;
-		sAppName = "6502 emulator";
-	}
-private:
 	cpu6502* cpu; //Pointer to the instance of the cpu
 
 	uint8_t userPage = 0x02; //Set the user defined page to 0x0200 as a default
@@ -60,7 +54,12 @@ private:
 		NMI = 1
 	};
 
-
+	Monitor6502(cpu6502* c)
+	{
+		//Set the pointer of cpu to the one created in main
+		cpu = c;
+		sAppName = "6502 emulator";
+	}
 
 
 	void loadBin(std::string name)
@@ -79,7 +78,7 @@ private:
 			std::vector<char> prg(block, block + size);
 			cpu->LoadProgram(prg);
 			delete[] block;
-			std::cout << "Loaded file "<<name<<"\n";
+			std::cout << "Loaded file " << name << "\n";
 		}
 		else
 			std::cout << "could not load file\n";
@@ -96,45 +95,26 @@ private:
 		{
 			std::string file;
 			stream >> file;
-			if (file == "")
-			{
-				std::cout << "Not enough arguments\n";
-				return true;
-			}
 			loadBin(file);
 			if (file == "test.bin")
-			{				
+			{
 				cpu->Reset(true); //Reset as you would with the core test
 				cpu->PC = 0x400;
 			}
-			else			
+			else
 				cpu->Reset(false);
-			
+
 		}
 		else if (cmd == "jump")
 		{
-			std::string hex;			
+			std::string hex;
 			stream >> hex;
-			if (hex == "")
-			{
-				std::cout << "Not enough arguments\n";
-				return true;
-			}
 			if (hex[0] == '$')
 				hex.erase(0, 1);
-			try
-
-			{
-				uint16_t loc = stoi(hex, 0, 16);
-				uint16_t tmp = cpu->PC;
-				cpu->PC = loc;
-				std::cout << "PC moved to $" << Hex(loc, 4) << " from $" << Hex(tmp, 4) << "\n";
-			}
-			catch(std::exception e)
-			{
-				std::cout <<"Invalid argument\n";
-				return true;
-			}
+			uint16_t loc = stoi(hex, 0, 16);
+			uint16_t tmp = cpu->PC;
+			cpu->PC = loc;
+			std::cout << "PC moved to $" << Hex(loc, 4) << " from $" << Hex(tmp, 4) << "\n";
 		}
 		else if (cmd == "cls")
 			ConsoleClear();
@@ -147,19 +127,21 @@ private:
 
 	bool OnUserCreate() override
 	{
+		olc::rcode SetWindoWTitle();
 		skin.LoadFromFile("Skin3.png");
 
 		loadBin("Demo.bin");
 		delayCnt = 2;
 		delay = 0.5 / (delayCnt + 1), t = 0; //Set a delay for continuous mode
 
-		//As standard console window is not shown on the background, print the messages on the OLC console if it's open
+		//As console window is not shown on the background, print the messages on OLC console - Only if it's open, but nothing gets printed to std out, if it's not
 		ConsoleCaptureStdOut(true);
 		return true;
 	}
 
 	bool OnUserUpdate(float fElapsedTime) override
-	{		
+	{
+
 		Clear(olc::BLACK);
 		if (follow)
 			userPage = (cpu->PC & 0xFF00) >> 8;
@@ -250,7 +232,7 @@ private:
 			cpu->TriggerInterrupt(NMI);
 		}
 
-		if (GetKey(olc::R).bPressed && !console)
+		if (GetKey(olc::W).bPressed && !console)
 		{
 			cpu->Reset(false);
 			userPage = cpu->mem[0xFFFD]; //Fetch the page from the upper byte of reset vector			
@@ -280,7 +262,7 @@ private:
 
 		if (GetKey(olc::ESCAPE).bPressed)
 		{
-			if(!console)
+			if (!console)
 				ConsoleShow(olc::Key::ESCAPE);
 			console = !console;
 		}
@@ -296,7 +278,7 @@ private:
 		if (GetKey(olc::LEFT).bPressed && !console)
 		{
 			userPage = (userPage - 0x1) & 0xFF;
-			
+
 		}
 
 		//Increase user defined page number by 0x10
@@ -605,7 +587,7 @@ private:
 
 		UI_line++;
 		DrawString(UI_rightColumn, UI_line * UI_lineHeight, "EXECUTION SPEED:", olc::DARK_YELLOW);
-		DrawString(UI_rightColumn + offset * UI_charWidth, UI_line * UI_lineHeight, (stepMode? "N/A":std::to_string(delayCnt+1)+"/"+std::to_string(MAX_SPEED+1)));
+		DrawString(UI_rightColumn + offset * UI_charWidth, UI_line * UI_lineHeight, (stepMode ? "N/A" : std::to_string(delayCnt) + "/" + std::to_string(MAX_SPEED)));
 
 	}
 
@@ -625,7 +607,7 @@ private:
 
 
 
-bool loadTest(cpu6502 &cpu)
+bool loadTest(cpu6502& cpu)
 {
 	char* block;
 	std::streampos size;
@@ -682,14 +664,14 @@ int main()
 	std::cout << "Core test is optional and will take approximately 60 seconds\nTest the core and exit? (Y/N)\n";
 	char c;
 	std::cin >> c;
-	
-	bool coreTest =(toupper(c)=='Y');
+
+	bool coreTest = (toupper(c) == 'Y');
 	cpu6502 cpu(coreTest); //Create a new instance of the cpu. Coretest is passed as an argument, and used to determinen whether the reset sequence is run or not and where the stack pointer points to, as the test assumes it to be at 0x1FF
 
 	if (coreTest)
 	{
-		
-		
+
+
 		watch test, total; //Stopwatch instances both for individual test and total time
 		uint8_t f = 0;
 		if (!loadTest(cpu))
@@ -697,7 +679,7 @@ int main()
 		std::cout << "Test " << std::to_string(f) << ": ";
 		test.start();
 		total.start();
-		
+
 		while (1)
 		{
 			if (cpu.mem[0x200] != f)
@@ -708,7 +690,9 @@ int main()
 
 				if (f == 0xf0)
 				{
-					std::cout << "Tests completed in " << total.stop() << " seconds and " << cpu.totalCycles << " cycles\n";					
+					std::cout << "Tests completed in " << total.stop() << " seconds and " << cpu.totalCycles << " cycles\n";
+					std::cout << "Press Enter";
+					std::system("pause"); //Windows specific, remove or replace for different platform
 					break;
 				}
 				std::cout << "Test " << std::to_string(f) << ": ";

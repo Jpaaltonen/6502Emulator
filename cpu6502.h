@@ -17,7 +17,7 @@ public:
 	int lastReadAddr, lastWriteAddr; //Last R/W accesses for visualization purposes
 
 	//Vector for memory - Using a static array would result in a warning regarding a large stack, and if we have to use dynamic allocation anyway, why not choose vector class?
-	std::vector<uint8_t> mem;
+	std::vector<uint16_t> mem;
 	uint8_t tick; //Clock tick - On/Off signal, half-cycle
 	uint8_t cycles; //OPcode cycles 
 	uint8_t t; //Tn for opcde cycle action - This is a workaround solution to cycle count changing eg. because of branching or crossing page boundaries

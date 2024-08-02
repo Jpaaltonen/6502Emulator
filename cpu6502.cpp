@@ -78,7 +78,6 @@ void cpu6502::Reset(bool core)
 {
 	opcode = -1;
 	cycles = 0;
-	totalCycles = 0;
 	tick = 0;
 	t = 0;
 	//Fetch the PC from reset vector
@@ -101,7 +100,7 @@ void cpu6502::Reset(bool core)
 	nmi = false;
 	exec = false;
 
-	//Set reset and interrupt sequence execution to true if running in monitor
+	//Set reset and interrupt sequence execútion to true if running in monitor
 	if (!core)
 	{
 		SP = 0x100; //Set SP to bottom of the stack - Reset sequence makes three pushes to the stack, and ends up at 0x1FD
@@ -125,7 +124,6 @@ void cpu6502::DisAsm()
 
 	uint16_t tmpPC=PC;
 	uint8_t offset,tmp;
-	uint16_t effAddr;
 	std::string s;
 	for (int i = 0; i < CODE_LIMIT; i++)
 	{		
@@ -174,9 +172,7 @@ void cpu6502::DisAsm()
 			tmpPC += 2;
 			break;
 		case IND:
-			effAddr=(mem[tmpPC+2])<<8|(mem[tmpPC+1]);
-			effAddr = (mem[effAddr + 1]) << 8 | (mem[effAddr]);
-			s = s + "\t($" + Hex(mem[tmpPC + 2], 2) + Hex(mem[tmpPC + 1], 2)+")\t[$"+Hex(effAddr,4)+"]";
+			s = s + "\t($" + Hex(mem[tmpPC + 2], 2) + Hex(mem[tmpPC + 1], 2)+")";
 			tmpPC += 2;
 			break;
 		case INDX:
@@ -1291,7 +1287,7 @@ void cpu6502::RTI()
 		dataBus = mem[addrBus];
 		effectiveAddr |= (dataBus << 8);
 		cycleAction = "PULL HIGH BYTE OF RETURN ADDRESS\nFROM STACK";
-		PC = effectiveAddr+1;
+		PC = effectiveAddr;
 		break;
 	}
 	t++;
@@ -1487,7 +1483,7 @@ void cpu6502::STA()
 	if (t == cycles)
 	{
 		dataBus = A;
-		cycleAction = "WRITE CONTENTS OF A TO\nADDRESS $" + Hex(addrBus, 4);
+		cycleAction = "WRITE CONTENTS OF A TO\nADDRESS 0x" + Hex(addrBus, 4);
 		mem[addrBus] = dataBus;
 		lastWriteAddr = addrBus;
 	}
@@ -1508,7 +1504,7 @@ void cpu6502::STX()
 	if (t == cycles)
 	{
 		dataBus =X;
-		cycleAction = "WRITE CONTENTS OF X TO\nADDRESS $" + Hex(addrBus, 4);
+		cycleAction = "WRITE CONTENTS OF X TO\nADDRESS 0x" + Hex(addrBus, 4);
 		mem[addrBus] = dataBus;
 		lastWriteAddr = addrBus;
 	}
@@ -1528,7 +1524,7 @@ void cpu6502::STY()
 	if (t == cycles)
 	{
 		dataBus = Y;
-		cycleAction = "WRITE CONTENTS OF Y TO\nADDRESS $" + Hex(addrBus, 4);
+		cycleAction = "WRITE CONTENTS OF Y TO\nADDRESS 0x" + Hex(addrBus, 4);
 		mem[addrBus] = dataBus;
 		lastWriteAddr = addrBus;
 	}
@@ -1960,7 +1956,7 @@ void cpu6502::MemOp()
 		case 2:
 			addrBus = effectiveAddr;
 			dataBus = mem[addrBus];
-			cycleAction = "FETCH DATA FROM EFFECTIVE\nADDRESS ($" + Hex(effectiveAddr, 4) + ")";
+			cycleAction = "FETCH DATA FROM EFFECTIVE\nADDRESS (0x" + Hex(effectiveAddr, 4) + ")";
 			break;
 		}
 		break;
@@ -1994,7 +1990,7 @@ void cpu6502::MemOp()
 			addrBus = effectiveAddr;
 			lastReadAddr = addrBus;
 			dataBus = mem[addrBus];
-			cycleAction = "FETCH DATA FROM EFFECTIVE\nADDRESS ($" + Hex(effectiveAddr, 4) + ")";
+			cycleAction = "FETCH DATA FROM EFFECTIVE\nADDRESS (0x" + Hex(effectiveAddr, 4) + ")";
 			break;
 		}
 		break;
@@ -2090,12 +2086,12 @@ void cpu6502::MemOp()
 			}
 			else
 			{
-				cycleAction = "FETCH DATA FROM EFFECTIVE\nADDRESS ($" + Hex(effectiveAddr, 4) + ")";
+				cycleAction = "FETCH DATA FROM EFFECTIVE\nADDRESS (0x" + Hex(effectiveAddr, 4) + ")";
 			}
 			break;
 		case 4:
 			discarded = false;
-			cycleAction = "FETCH DATA FROM EFFECTIVE\nADDRESS ($" + Hex(effectiveAddr, 4) + ")";
+			cycleAction = "FETCH DATA FROM EFFECTIVE\nADDRESS (0x" + Hex(effectiveAddr, 4) + ")";
 			break;
 		}
 		break;
@@ -2136,12 +2132,12 @@ void cpu6502::MemOp()
 			}
 			else
 			{
-				cycleAction = "FETCH DATA FROM EFFECTIVE\nADDRESS ($" + Hex(effectiveAddr, 4) + ")";
+				cycleAction = "FETCH DATA FROM EFFECTIVE\nADDRESS (0x" + Hex(effectiveAddr, 4) + ")";
 			}
 			break;
 		case 4:
 			discarded = false;
-			cycleAction = "FETCH DATA FROM EFFECTIVE\nADDRESS ($" + Hex(effectiveAddr, 4) + ")";
+			cycleAction = "FETCH DATA FROM EFFECTIVE\nADDRESS (0x" + Hex(effectiveAddr, 4) + ")";
 			break;
 		}
 		break;
@@ -2173,7 +2169,7 @@ void cpu6502::MemOp()
 			discarded = false;
 			addrBus = (addrBus + X) & 0xFF; //Constrain the address to zero page
 			dataBus = mem[addrBus];
-			cycleAction = "FETCH DATA FROM $" + Hex(addrBus, 4);
+			cycleAction = "FETCH DATA FROM 0x" + Hex(addrBus, 4);
 			break;
 		}
 
@@ -2205,7 +2201,7 @@ void cpu6502::MemOp()
 			discarded = false;
 			addrBus = (addrBus + Y) & 0xFF; //Constrain the address to zero page
 			dataBus = mem[addrBus];
-			cycleAction = "FETCH DATA FROM $" + Hex(addrBus, 4);
+			cycleAction = "FETCH DATA FROM 0x" + Hex(addrBus, 4);
 			break;
 		}
 		break;
@@ -2252,12 +2248,12 @@ void cpu6502::MemOp()
 			}
 			else
 			{
-				cycleAction = "FETCH DATA FROM $" + Hex(effectiveAddr, 4);
+				cycleAction = "FETCH DATA FROM 0x" + Hex(effectiveAddr, 4);
 			}
 			break;
 		case 5:
 			discarded = false;
-			cycleAction = "FETCH DATA FROM $" + Hex(effectiveAddr, 4);
+			cycleAction = "FETCH DATA FROM 0x" + Hex(effectiveAddr, 4);
 			break;
 		}
 		break;
@@ -2296,15 +2292,15 @@ void cpu6502::StoreOp()
 			{
 			case eSTA:
 				dataBus = A;
-				cycleAction = "WRITE CONTENTS OF A REGISTER\nTO ADDRESS $" + Hex(addrBus, 4);
+				cycleAction = "WRITE CONTENTS OF A REGISTER\nTO ADDRESS 0x" + Hex(addrBus, 4);
 				break;
 			case eSTX:
 				dataBus = X;
-				cycleAction = "WRITE CONTENTS OF X REGISTER\nTO ADDRESS $" + Hex(addrBus, 4);
+				cycleAction = "WRITE CONTENTS OF X REGISTER\nTO ADDRESS 0x" + Hex(addrBus, 4);
 				break;
 			case eSTY:
 				dataBus = Y;
-				cycleAction = "WRITE CONTENTS OF Y REGISTER\nTO ADDRESS $" + Hex(addrBus, 4);
+				cycleAction = "WRITE CONTENTS OF Y REGISTER\nTO ADDRESS 0x" + Hex(addrBus, 4);
 				break;
 			}
 			mem[addrBus] = dataBus;
@@ -2342,15 +2338,15 @@ void cpu6502::StoreOp()
 			{
 			case eSTA:
 				dataBus = A;
-				cycleAction = "WRITE CONTENTS OF A REGISTER\nTO ADDRESS $" + Hex(addrBus, 4);
+				cycleAction = "WRITE CONTENTS OF A REGISTER\nTO ADDRESS 0x" + Hex(addrBus, 4);
 				break;
 			case eSTX:
 				dataBus = X;
-				cycleAction = "WRITE CONTENTS OF X REGISTER\nTO ADDRESS $" + Hex(addrBus, 4);
+				cycleAction = "WRITE CONTENTS OF X REGISTER\nTO ADDRESS 0x" + Hex(addrBus, 4);
 				break;
 			case eSTY:
 				dataBus = Y;
-				cycleAction = "WRITE CONTENTS OF Y REGISTER\nTO ADDRESS $" + Hex(addrBus, 4);
+				cycleAction = "WRITE CONTENTS OF Y REGISTER\nTO ADDRESS 0x" + Hex(addrBus, 4);
 				break;
 			}
 			mem[addrBus] = dataBus;
@@ -2440,15 +2436,15 @@ void cpu6502::StoreOp()
 			{
 			case eSTA:
 				dataBus = A;
-				cycleAction = "WRITE CONTENTS OF A REGISTER\nTO ADDRESS $" + Hex(addrBus, 4);
+				cycleAction = "WRITE CONTENTS OF A REGISTER\nTO ADDRESS 0x" + Hex(addrBus, 4);
 				break;
 			case eSTX:
 				dataBus = X;
-				cycleAction = "WRITE CONTENTS OF X REGISTER\nTO ADDRESS $" + Hex(addrBus, 4);
+				cycleAction = "WRITE CONTENTS OF X REGISTER\nTO ADDRESS 0x" + Hex(addrBus, 4);
 				break;
 			case eSTY:
 				dataBus = Y;
-				cycleAction = "WRITE CONTENTS OF Y REGISTER\nTO ADDRESS $" + Hex(addrBus, 4);
+				cycleAction = "WRITE CONTENTS OF Y REGISTER\nTO ADDRESS 0x" + Hex(addrBus, 4);
 				break;
 			}
 			mem[addrBus] = dataBus;
@@ -2493,15 +2489,15 @@ void cpu6502::StoreOp()
 			{
 			case eSTA:
 				dataBus = A;
-				cycleAction = "WRITE CONTENTS OF A REGISTER\nTO ADDRESS $" + Hex(addrBus, 4);
+				cycleAction = "WRITE CONTENTS OF A REGISTER\nTO ADDRESS 0x" + Hex(addrBus, 4);
 				break;
 			case eSTX:
 				dataBus = X;
-				cycleAction = "WRITE CONTENTS OF X REGISTER\nTO ADDRESS $" + Hex(addrBus, 4);
+				cycleAction = "WRITE CONTENTS OF X REGISTER\nTO ADDRESS 0x" + Hex(addrBus, 4);
 				break;
 			case eSTY:
 				dataBus = Y;
-				cycleAction = "WRITE CONTENTS OF Y REGISTER\nTO ADDRESS $" + Hex(addrBus, 4);
+				cycleAction = "WRITE CONTENTS OF Y REGISTER\nTO ADDRESS 0x" + Hex(addrBus, 4);
 				break;
 			}
 			mem[addrBus] = dataBus;
@@ -2542,15 +2538,15 @@ void cpu6502::StoreOp()
 			{
 			case eSTA:
 				dataBus = A;
-				cycleAction = "WRITE CONTENTS OF A REGISTER\nTO ADDRESS $" + Hex(addrBus, 4);
+				cycleAction = "WRITE CONTENTS OF A REGISTER\nTO ADDRESS 0x" + Hex(addrBus, 4);
 				break;
 			case eSTX:
 				dataBus = X;
-				cycleAction = "WRITE CONTENTS OF X REGISTER\nTO ADDRESS $" + Hex(addrBus, 4);
+				cycleAction = "WRITE CONTENTS OF X REGISTER\nTO ADDRESS 0x" + Hex(addrBus, 4);
 				break;
 			case eSTY:
 				dataBus = Y;
-				cycleAction = "WRITE CONTENTS OF Y REGISTER\nTO ADDRESS $" + Hex(addrBus, 4);
+				cycleAction = "WRITE CONTENTS OF Y REGISTER\nTO ADDRESS 0x" + Hex(addrBus, 4);
 				break;
 			}
 			mem[addrBus] = dataBus;
@@ -2591,15 +2587,15 @@ void cpu6502::StoreOp()
 			{
 			case eSTA:
 				dataBus = A;
-				cycleAction = "WRITE CONTENTS OF A REGISTER\nTO ADDRESS $" + Hex(addrBus, 4);
+				cycleAction = "WRITE CONTENTS OF A REGISTER\nTO ADDRESS 0x" + Hex(addrBus, 4);
 				break;
 			case eSTX:
 				dataBus = X;
-				cycleAction = "WRITE CONTENTS OF X REGISTER\nTO ADDRESS $" + Hex(addrBus, 4);
+				cycleAction = "WRITE CONTENTS OF X REGISTER\nTO ADDRESS 0x" + Hex(addrBus, 4);
 				break;
 			case eSTY:
 				dataBus = Y;
-				cycleAction = "WRITE CONTENTS OF Y REGISTER\nTO ADDRESS $" + Hex(addrBus, 4);
+				cycleAction = "WRITE CONTENTS OF Y REGISTER\nTO ADDRESS 0x" + Hex(addrBus, 4);
 				break;
 			}
 			mem[addrBus] = dataBus;
@@ -2650,15 +2646,15 @@ void cpu6502::StoreOp()
 			{
 			case eSTA:
 				dataBus = A;
-				cycleAction = "WRITE CONTENTS OF A REGISTER\nTO ADDRESS $" + Hex(addrBus, 4);
+				cycleAction = "WRITE CONTENTS OF A REGISTER\nTO ADDRESS 0x" + Hex(addrBus, 4);
 				break;
 			case eSTX:
 				dataBus = X;
-				cycleAction = "WRITE CONTENTS OF X REGISTER\nTO ADDRESS $" + Hex(addrBus, 4);
+				cycleAction = "WRITE CONTENTS OF X REGISTER\nTO ADDRESS 0x" + Hex(addrBus, 4);
 				break;
 			case eSTY:
 				dataBus = Y;
-				cycleAction = "WRITE CONTENTS OF Y REGISTER\nTO ADDRESS $" + Hex(addrBus, 4);
+				cycleAction = "WRITE CONTENTS OF Y REGISTER\nTO ADDRESS 0x" + Hex(addrBus, 4);
 				break;
 			}
 			mem[addrBus] = dataBus;
@@ -2867,14 +2863,14 @@ void cpu6502::PushOp()
 		if (opcode == ePHA)
 		{
 			dataBus = A;
-			cycleAction = "WRITE CONTENTS OF REGISTER A\nTO STACK AT $" + Hex(SP, 4);
+			cycleAction = "WRITE CONTENTS OF REGISTER A\nTO STACK AT 0x" + Hex(SP, 4);
 		}
 		else if (opcode == ePHP)
 		{
 			SetFlag(B, 1);
 			SetFlag(U, 1);
 			dataBus = P;
-			cycleAction = "WRITE CONTENTS OF STATUS REGISTER\nTO STACK AT $" + Hex(SP, 4);
+			cycleAction = "WRITE CONTENTS OF STATUS REGISTER\nTO STACK AT 0x" + Hex(SP, 4);
 		}
 		mem[SP] = dataBus;
 		SP = 0x100 | ((SP - 1) & 0xFF);
@@ -2924,14 +2920,14 @@ void cpu6502::PullOp()
 			SetFlag(N, A >= 0x80);
 			SetFlag(Z, A == 0);
 
-			cycleAction = "FETCH CONTENTS OF REGISTER A\nFROM STACK AT $" + Hex(SP, 4);
+			cycleAction = "FETCH CONTENTS OF REGISTER A\nFROM STACK AT 0x" + Hex(SP, 4);
 		}
 		else if (opcode == ePLP)
 		{
 			tmp = P; //Store current status register
 			P = dataBus;
 
-			cycleAction = "FETCH CONTENTS OF STATUS REGISTER\nFROM STACK AT $" + Hex(SP, 4);
+			cycleAction = "FETCH CONTENTS OF STATUS REGISTER\nFROM STACK AT 0x" + Hex(SP, 4);
 			SetFlag(U, true);
 			SetFlag(B,(tmp & B));//B flag is not affected by the pull, use the status before the pull
 		}
@@ -3062,7 +3058,7 @@ void cpu6502::InterruptOP()
 	case 2:
 		discarded = false;
 		addrBus = SP;
-		dataBus = (PC & 0xFF00) >> 8;		
+		dataBus = ((PC+1) & 0xFF00) >> 8;		
 		if (reset)
 		{
 			rw = true;
@@ -3079,7 +3075,7 @@ void cpu6502::InterruptOP()
 		break;
 	case 3:
 		addrBus = SP;
-		dataBus = PC & 0xFF;
+		dataBus = (PC+1) & 0xFF;
 		mem[addrBus] = dataBus;
 		lastWriteAddr = addrBus;
 		if (reset)
@@ -3157,7 +3153,8 @@ void cpu6502::InterruptOP()
 		dataBus = mem[addrBus];
 		effectiveAddr |= (dataBus << 8);
 		PC = effectiveAddr;
-		SetFlag(I, 1);
+		if(!reset)
+			SetFlag(I, 1);
 
 		
 		//Clear helper flags
