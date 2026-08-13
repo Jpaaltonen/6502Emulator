@@ -1,6 +1,7 @@
 # A 6502 emulator
 
 ## What is it?
+![6502 Emulator](screenshot.png)
 A cycle-level 6502 processor emulator I wrote as my Bachelor's thesis. The theoretical part can be found at https://urn.fi/URN:NBN:fi:amk-202304054800.
 It emulates the action and behavior of the original 6502 processor at a cycle level, giving user information on memory and register contents and the action being taken at each cycle. Only valid opcodes are emulated, illegal opcodes will hang the processor.
 
